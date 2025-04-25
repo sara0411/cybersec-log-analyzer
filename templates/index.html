@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyseur de Logs de Sécurité</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Analyseur de Logs de Sécurité</h1>
+            <p>Analyse des fichiers logs pour détecter les menaces de sécurité potentielles</p>
+        </header>
+        
+        <main>
+            <section class="upload-section">
+                <h2>Télécharger un fichier log</h2>
+                <form action="/analyze" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="logfile">Sélectionnez un fichier log:</label>
+                        <input type="file" id="logfile" name="logfile" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn-primary">Analyser</button>
+                    </div>
+                </form>
+            </section>
+            
+            <section class="paste-section">
+                <h2>Ou collez votre contenu log</h2>
+                <form action="/analyze-text" method="post">
+                    <div class="form-group">
+                        <textarea id="logtext" name="logtext" rows="10" placeholder="Collez vos logs ici..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn-primary">Analyser</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 Analyseur de Logs de Sécurité - Projet PFA</p>
+        </footer>
+    </div>
+</body>
+</html>

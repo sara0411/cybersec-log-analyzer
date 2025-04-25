@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats d'Analyse - Analyseur de Logs de Sécurité</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Résultats d'Analyse</h1>
+            <p>Analyse complète de vos fichiers logs</p>
+        </header>
+        
+        <main>
+            <section class="summary-section">
+                <h2>Résumé</h2>
+                <div class="summary-stats">
+                    <div class="stat-card">
+                        <h3>Total des entrées</h3>
+                        <p class="stat-value">{{ stats.total_entries }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Menaces détectées</h3>
+                        <p class="stat-value threat">{{ stats.total_threats }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Score de risque</h3>
+                        <p class="stat-value {{ stats.risk_class }}">{{ stats.risk_score }}</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="threats-section">
+                <h2>Menaces détectées</h2>
+                <table class="threats-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Probabilité</th>
+                            <th>Entrée log</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for threat in threats %}
+                        <tr class="threat-row {{ threat.severity }}">
+                            <td>{{ threat.type }}</td>
+                            <td>{{ threat.probability }}%</td>
+                            <td class="log-entry">{{ threat.log_entry }}</td>
+                            <td><button class="btn-details" onclick="showDetails('{{ threat.id }}')">Voir détails</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                {% if not threats %}
+                <p class="no-threats">Aucune menace détectée.</p>
+                {% endif %}
+            </section>
+            
+            <section class="distribution-section">
+                <h2>Distribution des types de logs</h2>
+                <div class="chart-container">
+                    <canvas id="logsDistributionChart"></canvas>
+                </div>
+            </section>
+            
+            <section class="actions-section">
+                <h2>Actions recommandées</h2>
+                <ul class="actions-list">
+                    {% for action in actions %}
+                    <li class="{{ action.priority }}">{{ action.description }}</li>
+                    {% endfor %}
+                </ul>
+                
+                {% if not actions %}
+                <p>Aucune action nécessaire.</p>
+                {% endif %}
+            </section>
+            
+            <div class="btn-container">
+                <a href="/" class="btn-secondary">Analyser un autre fichier</a>
+                <a href="/download-report" class="btn-primary">Télécharger le rapport</a>
+            </div>
+        </main>
+        
+        <!-- Modal pour les détails -->
+        <div id="detailsModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Détails de la menace</h2>
+                <div id="threatDetails"></div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>&copy; 2025 Analyseur de Logs de Sécurité - Projet PFA</p>
+        </footer>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Données pour le graphique
+        const logTypes = JSON.parse('{{ log_types|tojson|escapejs }}');
+        
+        // Créer le graphique de distribution
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('logsDistributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: logTypes.labels,
+                    datasets: [{
+                        data: logTypes.values,
+                        backgroundColor: [
+                            '#4CAF50', '#FFC107', '#F44336', '#2196F3', '#9C27B0', '#FF9800'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Fonctions pour le modal
+        function showDetails(threatId) {
+            fetch(`/threat-details/${threatId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('threatDetails').innerHTML = data.details;
+                    document.getElementById('detailsModal').style.display = 'block';
+                });
+        }
+        
+        // Fermer le modal
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('detailsModal').style.display = 'none';
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (event.target == document.getElementById('detailsModal')) {
+                document.getElementById('detailsModal').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
+        
