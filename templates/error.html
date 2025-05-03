@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erreur - Analyseur de Logs de Sécurité</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Une erreur est survenue</h1>
+        </header>
+        
+        <main>
+            <section class="error-section">
+                <h2>Détails de l'erreur</h2>
+                <div class="error-details">
+                    <p>{{ error }}</p>
+                </div>
+                
+                <div class="btn-container">
+                    <a href="/" class="btn-primary">Retour à l'accueil</a>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 Analyseur de Logs de Sécurité - Projet PFA</p>
+        </footer>
+    </div>
+</body>
+</html>

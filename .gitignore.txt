@@ -1,0 +1,19 @@
+# Ignorer les environnements virtuels
+.venv/
+venv/
+
+# Fichiers Python inutiles
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Fichiers de logs
+*.log
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Autres gros fichiers éventuels
+*.pyd
+*.lib
+*.dll
