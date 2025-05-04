@@ -2,7 +2,10 @@ import nltk
 import re
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Configuration du chemin NLTK
 nltk.data.path.append('C:/Users/PC/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/Roaming/nltk_data')
+
 # Télécharger les ressources NLTK nécessaires
 try:
     nltk.data.find('tokenizers/punkt')
@@ -27,6 +30,10 @@ def tokenize_logs(logs):
 
 def extract_features(logs):
     """Extrait les vecteurs TF-IDF des logs bruts."""
+    # Si logs est une liste de listes (tokenisés), on les convertit en chaînes
+    if isinstance(logs, list) and all(isinstance(item, list) for item in logs):
+        logs = [' '.join(tokens) for tokens in logs]
+
     vectorizer = TfidfVectorizer(
         tokenizer=word_tokenize,
         token_pattern=None  # Important pour utiliser notre tokenizer NLTK
