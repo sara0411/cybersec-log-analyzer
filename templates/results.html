@@ -103,7 +103,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Données pour le graphique
-        const logTypes = JSON.parse('{{ log_types|tojson|escapejs }}');
+        const logTypes = JSON.parse('{{ log_types|tojson|safe }}');
         
         // Créer le graphique de distribution
         document.addEventListener('DOMContentLoaded', function() {

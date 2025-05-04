@@ -2,7 +2,7 @@ import nltk
 import re
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
-
+nltk.data.path.append('C:/Users/PC/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/Roaming/nltk_data')
 # Télécharger les ressources NLTK nécessaires
 try:
     nltk.data.find('tokenizers/punkt')

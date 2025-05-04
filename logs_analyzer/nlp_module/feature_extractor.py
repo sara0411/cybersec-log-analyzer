@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 df=pd.read_csv('C:/Users/PC/Documents/LogAnalyser/cybersec-log-analyzer/advanced_cybersecurity_data.csv')
 class LogFeatureExtractor:
     def __init__(self):
+        nltk.data.path.append('C:/Users/PC/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0/LocalCache/Roaming/nltk_data')
         # Téléchargement des ressources NLTK nécessaires
         try:
             nltk.data.find('tokenizers/punkt')

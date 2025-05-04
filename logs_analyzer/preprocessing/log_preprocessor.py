@@ -3,7 +3,7 @@ import pandas as pd
 import json
 from datetime import datetime
 
-class ApacheLogPreprocessor:
+class LogPreprocessor:
     def __init__(self):
         # Expression régulière pour logs Apache/Nginx
         self.apache_pattern = re.compile(r'(\S+) - - \[(.*?)\] "(.*?)" (\d+) (\d+)')
