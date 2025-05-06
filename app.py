@@ -308,7 +308,7 @@ def generate_actions(threats, stats):
             'priority': 'high'
         })
         
-    if any('auth' in t for t in threat_types or 'unauthorized' in t for t in threat_types):
+    if any('auth' in t for t in threat_types) or any('unauthorized' in t for t in threat_types):
         actions.append({
             'description': "Renforcer l'authentification et implémenter une authentification à deux facteurs",
             'priority': 'medium'
