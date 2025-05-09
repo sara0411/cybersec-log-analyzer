@@ -1,3 +1,4 @@
+# logs_analyzer/preprocessing/log_preprocessor.py
 import re
 import pandas as pd
 import json
@@ -21,7 +22,7 @@ class LogPreprocessor:
             r"((%3C)|<)[^\n]+((%3E)|>)"
         ]
         self.extractor=LogFeatureExtractor()
-        
+
     def process_log_file(self, filepath):
         """Lit un fichier de logs ligne par ligne, parse et retourne un DataFrame prêt à l'analyse."""
         parsed_logs = []
@@ -33,13 +34,27 @@ class LogPreprocessor:
 
         df = pd.DataFrame(parsed_logs)
 
+        # If parsing was successful, the 'request' column contains the message
+        if 'request' in df.columns:
+            df['message'] = df['request'].fillna('')
+        else:
+            df['message'] = df['raw'].fillna('') # Fallback to raw line if no 'request'
+
+        # You might need to infer or extract the 'level' from the log line or set a default
+        df['level'] = 'INFO' # Default level, adjust if your logs contain level info
+
         # Vérifie que 'raw' est bien présent
         if 'raw' not in df.columns:
-            df['raw'] = ""  # ou tu peux lever une exception personnalisée
+            df['raw'] = ""
+
+        # Basic rule-based anomaly detection for 'Anomaly_Flag'
+        df['Anomaly_Flag'] = 0  # Initialize all as normal
+        df.loc[df['status'].isin([400, 401, 403, 500]), 'Anomaly_Flag'] = 1
+        df.loc[df['potential_threats'].notna(), 'Anomaly_Flag'] = 1
 
         return df
 
-    
+
     def process_data(self, df):
         """Pipeline complet pour extraire les features NLP des logs Apache."""
         # Prétraitement des logs
@@ -86,12 +101,15 @@ class LogPreprocessor:
                 "status": int(status),
                 "size": int(size),
                 "raw": log_line,
-                "parsed": True
+                "parsed": True,
+                "request": request, # Keep the full request as the 'message'
+                "potential_threats": self.detect_potential_threats(request) # Detect threats based on the request
             }
 
         return {
             "raw": log_line,
-            "parsed": False
+            "parsed": False,
+            "potential_threats": None
         }
 
     def extract_payloads(self, parsed_log):
@@ -101,4 +119,29 @@ class LogPreprocessor:
 
         for pattern in self.sql_patterns:
             if re.search(pattern, url, re.IGNORECASE):
-                payloads
+                payloads.append("SQL Injection")
+                break
+        for pattern in self.xss_patterns:
+            if re.search(pattern, url, re.IGNORECASE):
+                payloads.append("XSS")
+                break
+        return payloads
+
+    def detect_potential_threats(self, log_message):
+        """Detects potential threats (SQL injection, XSS) in a log message."""
+        threats = []
+        if any(re.search(pattern, log_message, re.IGNORECASE) for pattern in self.sql_patterns):
+            threats.append("SQL_INJECTION")
+        if any(re.search(pattern, log_message, re.IGNORECASE) for pattern in self.xss_patterns):
+            threats.append("XSS")
+        return threats if threats else None
+
+    def save_processed_logs(self, processed_df, output_base):
+        """Saves the processed log DataFrame to a CSV file."""
+        output_path = f"{output_base}.csv"
+        try:
+            processed_df.to_csv(output_path, index=False, encoding='utf-8')
+            return output_path
+        except Exception as e:
+            print(f"Error saving processed logs: {e}")
+            return None

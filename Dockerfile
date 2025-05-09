@@ -15,6 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copie du code source
 COPY . .
 
+COPY data/ data/
+
 # Créer les répertoires nécessaires
 RUN mkdir -p data/raw_logs data/processed data/uploads data/reports models
 
