@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+</body><!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -8,12 +9,12 @@
 </head>
 <body>
     <div class="container">
-        <header>
+        <header role="banner">
             <h1>Résultats d'Analyse</h1>
             <p>Analyse complète de vos fichiers logs</p>
         </header>
-        
-        <main>
+
+        <main role="main">
             <section class="summary-section">
                 <h2>Résumé</h2>
                 <div class="summary-stats">
@@ -27,46 +28,48 @@
                     </div>
                     <div class="stat-card">
                         <h3>Score de risque</h3>
-                        <p class="stat-value {{ stats.risk_class }}">{{ stats.risk_score }}</p>
+                        <p class="stat-value {{ stats.risk_class }}">{{ stats.risk_score }}%</p>
                     </div>
                 </div>
             </section>
-            
+
             <section class="threats-section">
                 <h2>Menaces détectées</h2>
-                <table class="threats-table">
-                    <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>Probabilité</th>
-                            <th>Entrée log</th>
-                            <th>Détails</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for threat in threats %}
-                        <tr class="threat-row {{ threat.severity }}">
-                            <td>{{ threat.type }}</td>
-                            <td>{{ threat.probability }}%</td>
-                            <td class="log-entry">{{ threat.log_entry }}</td>
-                            <td><button class="btn-details" onclick="showDetails('{{ threat.id }}')">Voir détails</button></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                
+                <div class="table-wrapper">
+                    <table class="threats-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Probabilité</th>
+                                <th>Entrée log</th>
+                                <th>Détails</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for threat in threats %}
+                            <tr class="threat-row {{ threat.severity }}">
+                                <td>{{ threat.type }}</td>
+                                <td>{{ threat.probability }}%</td>
+                                <td class="log-entry" title="{{ threat.log_entry }}">{{ threat.log_entry }}</td>
+                                <td><button class="btn-details" onclick="showDetails('{{ threat.id }}')" aria-labelledby="details-{{ threat.id }}">Voir détails</button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
                 {% if not threats %}
                 <p class="no-threats">Aucune menace détectée.</p>
                 {% endif %}
             </section>
-            
+
             <section class="distribution-section">
                 <h2>Distribution des types de logs</h2>
                 <div class="chart-container">
-                    <canvas id="logsDistributionChart"></canvas>
+                    <canvas id="logsDistributionChart" aria-label="Distribution des types de logs"></canvas>
                 </div>
             </section>
-            
+
             <section class="actions-section">
                 <h2>Actions recommandées</h2>
                 <ul class="actions-list">
@@ -74,37 +77,36 @@
                     <li class="{{ action.priority }}">{{ action.description }}</li>
                     {% endfor %}
                 </ul>
-                
+
                 {% if not actions %}
                 <p>Aucune action nécessaire.</p>
                 {% endif %}
             </section>
-            
+
             <div class="btn-container">
                 <a href="/" class="btn-secondary">Analyser un autre fichier</a>
                 <a href="/download-report" class="btn-primary">Télécharger le rapport</a>
             </div>
         </main>
-        
-        <!-- Modal pour les détails -->
-        <div id="detailsModal" class="modal">
+
+        <div id="detailsModal" class="modal" aria-modal="true" role="dialog" aria-labelledby="modal-title">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>Détails de la menace</h2>
+                <h2 id="modal-title">Détails de la menace</h2>
                 <div id="threatDetails"></div>
             </div>
         </div>
-        
-        <footer>
+
+        <footer role="contentinfo">
             <p>&copy; 2025 Analyseur de Logs de Sécurité - Projet PFA</p>
         </footer>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Données pour le graphique
         const logTypes = JSON.parse('{{ log_types|tojson|safe }}');
-        
+
         // Créer le graphique de distribution
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('logsDistributionChart').getContext('2d');
@@ -129,7 +131,7 @@
                 }
             });
         });
-        
+
         // Fonctions pour le modal
         function showDetails(threatId) {
             fetch(`/threat-details/${threatId}`)
@@ -137,14 +139,18 @@
                 .then(data => {
                     document.getElementById('threatDetails').innerHTML = data.details;
                     document.getElementById('detailsModal').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error fetching threat details:', error);
+                    alert('Could not fetch threat details. Please try again.'); // User-friendly error
                 });
         }
-        
+
         // Fermer le modal
         document.querySelector('.close').addEventListener('click', function() {
             document.getElementById('detailsModal').style.display = 'none';
         });
-        
+
         window.addEventListener('click', function(event) {
             if (event.target == document.getElementById('detailsModal')) {
                 document.getElementById('detailsModal').style.display = 'none';
@@ -153,4 +159,4 @@
     </script>
 </body>
 </html>
-        
+</html>
