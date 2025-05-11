@@ -1,14 +1,14 @@
 :root {
-    --primary: #4361ee;
-    --primary-dark: #3a56d4;
-    --secondary: #3f37c9;
-    --accent: #f72585;
-    --success: #4cc9f0;
-    --warning: #f8961e;
-    --danger: #ef233c;
-    --dark: #2b2d42;
-    --medium: #8d99ae;
-    --light: #edf2f4;
+    --primary: #2c3e50; /* Dark Blue/Gray */
+    --primary-dark: #233140; /* A slightly darker shade for hover effects */
+    --secondary: #3498db; /* Bright Blue */
+    --accent: #e74c3c; /* Red/Orange-Red (for critical) */
+    --success: #2ecc71; /* Green (for low severity) */
+    --warning: #f39c12; /* Orange (for medium severity) */
+    --danger: #e74c3c; /* Red/Orange-Red (for high severity) */
+    --dark: #333; /* A standard dark color for text */
+    --medium: #7f8c8d; /* A neutral gray for less prominent text */
+    --light: #ecf0f1; /* A very light gray for backgrounds */
     --white: #ffffff;
     --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -22,7 +22,7 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f5f7fa;
+    background-color: var(--light); /* Using the new light gray */
     color: var(--dark);
     line-height: 1.6;
 }
@@ -117,7 +117,7 @@ input[type="file"] {
 
 input[type="file"]:hover {
     border-color: var(--primary);
-    background-color: rgba(67, 97, 238, 0.05);
+    background-color: rgba(44, 62, 80, 0.05); /* Hover effect using the primary color */
 }
 
 textarea {
@@ -134,7 +134,7 @@ textarea {
 textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.2); /* Focus effect using the primary color */
 }
 
 /* Button Styles */
@@ -158,7 +158,7 @@ textarea:focus {
 }
 
 .btn-primary:hover {
-    background-color: var(--primary-dark);
+    background-color: var(--primary-dark); /* Use the slightly darker shade */
     transform: translateY(-2px);
 }
 
@@ -169,7 +169,7 @@ textarea:focus {
 }
 
 .btn-secondary:hover {
-    background-color: rgba(67, 97, 238, 0.1);
+    background-color: rgba(44, 62, 80, 0.1); /* A slight hover effect using the primary color with opacity */
     transform: translateY(-2px);
 }
 
@@ -201,7 +201,7 @@ footer {
     padding: 1.5rem 0;
     color: var(--medium);
     font-size: 0.9rem;
-    border-top: 1px solid rgba(141, 153, 174, 0.2);
+    border-top: 1px solid rgba(127, 140, 141, 0.2); /* Use a slightly darker medium for border */
 }
 
 /* Results Page Specific Styles */
@@ -276,7 +276,7 @@ footer {
 
 .threats-table td {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(141, 153, 174, 0.2);
+    border-bottom: 1px solid rgba(127, 140, 141, 0.3); /* Use the medium color with opacity */
 }
 
 .threats-table tr:last-child td {
@@ -284,7 +284,7 @@ footer {
 }
 
 .threats-table tr:hover td {
-    background-color: rgba(67, 97, 238, 0.05);
+    background-color: rgba(44, 62, 80, 0.05); /* Hover effect using the primary color */
 }
 
 .threat-row.high {
@@ -301,7 +301,7 @@ footer {
 
 .btn-details {
     padding: 0.5rem 1rem;
-    background-color: var(--primary);
+    background-color: var(--secondary); /* Use the secondary color for details button */
     color: white;
     border: none;
     border-radius: 6px;
@@ -311,7 +311,7 @@ footer {
 }
 
 .btn-details:hover {
-    background-color: var(--primary-dark);
+    background-color: #2980b9; /* A slightly darker shade of secondary for hover */
     transform: translateY(-2px);
 }
 
@@ -342,32 +342,32 @@ footer {
 }
 
 .actions-list li.high {
-    background-color: rgba(239, 35, 60, 0.1);
+    background-color: rgba(231, 76, 60, 0.1); /* Use danger color with opacity */
     border-left: 4px solid var(--danger);
 }
 
 .actions-list li.high:before {
-    content: "\f071";
+    content: "\f071"; /* Exclamation triangle icon */
     color: var(--danger);
 }
 
 .actions-list li.medium {
-    background-color: rgba(248, 150, 30, 0.1);
+    background-color: rgba(243, 156, 18, 0.1); /* Use warning color with opacity */
     border-left: 4px solid var(--warning);
 }
 
 .actions-list li.medium:before {
-    content: "\f06a";
+    content: "\f06a"; /* Circle exclamation icon */
     color: var(--warning);
 }
 
 .actions-list li.low {
-    background-color: rgba(76, 201, 240, 0.1);
+    background-color: rgba(46, 204, 113, 0.1); /* Use success color with opacity */
     border-left: 4px solid var(--success);
 }
 
 .actions-list li.low:before {
-    content: "\f05a";
+    content: "\f05a"; /* Info circle icon */
     color: var(--success);
 }
 
@@ -380,7 +380,7 @@ footer {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(43, 45, 66, 0.8);
+    background-color: rgba(44, 62, 80, 0.8); /* Use primary color with opacity */
     backdrop-filter: blur(4px);
     overflow-y: auto;
 }

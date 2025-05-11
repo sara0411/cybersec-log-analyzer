@@ -1,22 +1,32 @@
-
-</body><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Résultats d'Analyse - Analyseur de Logs de Sécurité</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <!-- Parallax Background Elements -->
+    <div class="parallax-bg">
+        <div class="parallax-layer layer-1" data-depth="0.1"></div>
+        <div class="parallax-layer layer-2" data-depth="0.3"></div>
+        <div class="parallax-layer layer-3" data-depth="0.6"></div>
+    </div>
+
     <div class="container">
-        <header role="banner">
-            <h1>Résultats d'Analyse</h1>
-            <p>Analyse complète de vos fichiers logs</p>
+        <header>
+            <div class="header-content">
+                <h1><i class="fas fa-chart-bar"></i> Résultats d'Analyse</h1>
+                <p>Analyse complète de vos fichiers logs</p>
+            </div>
         </header>
 
-        <main role="main">
+        <main>
             <section class="summary-section">
-                <h2>Résumé</h2>
+                <h2><i class="fas fa-chart-pie"></i> Résumé</h2>
                 <div class="summary-stats">
                     <div class="stat-card">
                         <h3>Total des entrées</h3>
@@ -28,35 +38,33 @@
                     </div>
                     <div class="stat-card">
                         <h3>Score de risque</h3>
-                        <p class="stat-value {{ stats.risk_class }}">{{ stats.risk_score }}%</p>
+                        <p class="stat-value {{ stats.risk_class }}">{{ stats.risk_score }}</p>
                     </div>
                 </div>
             </section>
 
             <section class="threats-section">
-                <h2>Menaces détectées</h2>
-                <div class="table-wrapper">
-                    <table class="threats-table">
-                        <thead>
-                            <tr>
-                                <th>Type</th>
-                                <th>Probabilité</th>
-                                <th>Entrée log</th>
-                                <th>Détails</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for threat in threats %}
-                            <tr class="threat-row {{ threat.severity }}">
-                                <td>{{ threat.type }}</td>
-                                <td>{{ threat.probability }}%</td>
-                                <td class="log-entry" title="{{ threat.log_entry }}">{{ threat.log_entry }}</td>
-                                <td><button class="btn-details" onclick="showDetails('{{ threat.id }}')" aria-labelledby="details-{{ threat.id }}">Voir détails</button></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                <h2><i class="fas fa-exclamation-triangle"></i> Menaces détectées</h2>
+                <table class="threats-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Probabilité</th>
+                            <th>Entrée log</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for threat in threats %}
+                        <tr class="threat-row {{ threat.severity }}">
+                            <td>{{ threat.type }}</td>
+                            <td>{{ threat.probability }}%</td>
+                            <td class="log-entry">{{ threat.log_entry }}</td>
+                            <td><button class="btn-details" onclick="showDetails('{{ threat.id }}')"><i class="fas fa-eye"></i> Détails</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
 
                 {% if not threats %}
                 <p class="no-threats">Aucune menace détectée.</p>
@@ -64,14 +72,14 @@
             </section>
 
             <section class="distribution-section">
-                <h2>Distribution des types de logs</h2>
+                <h2><i class="fas fa-chart-bar"></i> Distribution des types de logs</h2>
                 <div class="chart-container">
-                    <canvas id="logsDistributionChart" aria-label="Distribution des types de logs"></canvas>
+                    <canvas id="logsDistributionChart"></canvas>
                 </div>
             </section>
 
             <section class="actions-section">
-                <h2>Actions recommandées</h2>
+                <h2><i class="fas fa-tasks"></i> Actions recommandées</h2>
                 <ul class="actions-list">
                     {% for action in actions %}
                     <li class="{{ action.priority }}">{{ action.description }}</li>
@@ -84,69 +92,80 @@
             </section>
 
             <div class="btn-container">
-                <a href="/" class="btn-secondary">Analyser un autre fichier</a>
-                <a href="/download-report" class="btn-primary">Télécharger le rapport</a>
+                <a href="/" class="btn btn-secondary"><i class="fas fa-undo"></i> Analyser un autre fichier</a>
+                <a href="/download-report" class="btn btn-primary"><i class="fas fa-download"></i> Télécharger le rapport</a>
             </div>
         </main>
 
-        <div id="detailsModal" class="modal" aria-modal="true" role="dialog" aria-labelledby="modal-title">
+        <!-- Modal pour les détails -->
+        <div id="detailsModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2 id="modal-title">Détails de la menace</h2>
+                <h2><i class="fas fa-search-plus"></i> Détails de la menace</h2>
                 <div id="threatDetails"></div>
             </div>
         </div>
 
-        <footer role="contentinfo">
+        <footer>
             <p>&copy; 2025 Analyseur de Logs de Sécurité - Projet PFA</p>
         </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>
     <script>
-        // Données pour le graphique
-        const logTypes = JSON.parse('{{ log_types|tojson|safe }}');
-
-        // Créer le graphique de distribution
+        // Initialize parallax effect
         document.addEventListener('DOMContentLoaded', function() {
+            const scene = document.querySelector('.parallax-bg');
+            const parallaxInstance = new Parallax(scene, {
+                relativeInput: true,
+                hoverOnly: true,
+                calibrateX: true,
+                calibrateY: true
+            });
+
+            // Chart initialization
+            const logTypes = JSON.parse('{{ log_types|tojson|safe }}');
             const ctx = document.getElementById('logsDistributionChart').getContext('2d');
             new Chart(ctx, {
-                type: 'pie',
+                type: 'doughnut',
                 data: {
                     labels: logTypes.labels,
                     datasets: [{
                         data: logTypes.values,
                         backgroundColor: [
-                            '#4CAF50', '#FFC107', '#F44336', '#2196F3', '#9C27B0', '#FF9800'
-                        ]
+                            '#4361ee',
+                            '#4cc9f0',
+                            '#3f37c9',
+                            '#7209b7',
+                            '#f72585',
+                            '#8d99ae'
+                        ],
+                        borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             position: 'right',
                         }
-                    }
+                    },
+                    cutout: '65%'
                 }
             });
         });
 
-        // Fonctions pour le modal
         function showDetails(threatId) {
             fetch(`/threat-details/${threatId}`)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('threatDetails').innerHTML = data.details;
                     document.getElementById('detailsModal').style.display = 'block';
-                })
-                .catch(error => {
-                    console.error('Error fetching threat details:', error);
-                    alert('Could not fetch threat details. Please try again.'); // User-friendly error
                 });
         }
 
-        // Fermer le modal
         document.querySelector('.close').addEventListener('click', function() {
             document.getElementById('detailsModal').style.display = 'none';
         });
@@ -158,5 +177,4 @@
         });
     </script>
 </body>
-</html>
 </html>
