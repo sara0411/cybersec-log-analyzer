@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,71 +9,212 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <!-- Parallax Background Elements -->
-    <div class="parallax-bg">
-        <div class="parallax-layer layer-1" data-depth="0.1"></div>
-        <div class="parallax-layer layer-2" data-depth="0.3"></div>
-        <div class="parallax-layer layer-3" data-depth="0.6"></div>
+    <div class="theme-switch">
+        <label class="switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider round"></span>
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-sun"></i>
+        </label>
     </div>
-
-    <div class="container">
-        <header>
-            <div class="header-content">
-                <h1><i class="fas fa-shield-alt"></i> Analyseur de Logs de Sécurité</h1>
-                <p>Analyse avancée des fichiers logs pour détecter les menaces de sécurité potentielles</p>
+    
+    <div class="app-container">
+        <div class="upload-container">
+            <div class="app-header">
+                <div class="logo-container">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>Analyseur de Logs de Sécurité</h1>
+                </div>
+                <p class="app-description">
+                    Analyse avancée des fichiers logs pour détecter les menaces de sécurité potentielles
+                </p>
             </div>
-        </header>
 
-        <main>
             <div class="upload-options">
-                <section class="upload-section">
-                    <i class="fas fa-cloud-upload-alt section-icon"></i>
-                    <h2><i class="fas fa-file-upload"></i> Télécharger un fichier log</h2>
-                    <form action="/analyze" method="post" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="logfile">Sélectionnez un fichier log:</label>
-                            <input type="file" id="logfile" name="logfile" accept=".log,.txt" required>
+                <div class="upload-card">
+                    <div class="upload-icon pulse">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h2>Télécharger un fichier log</h2>
+                    <form action="/analyze" method="post" enctype="multipart/form-data" class="upload-form">
+                        <div class="file-upload-container" id="dropZone">
+                            <input type="file" id="logfile" name="logfile" accept=".log,.txt" class="file-input" required>
+                            <label for="logfile" class="file-label">
+                                <i class="fas fa-file-upload"></i>
+                                <span>Glissez votre fichier ici ou<br>cliquez pour sélectionner</span>
+                            </label>
+                            <div class="selected-file-info hidden">
+                                <span class="file-name"></span>
+                                <div class="file-progress">
+                                    <div class="progress-bar"></div>
+                                </div>
+                                <button type="button" class="remove-file" aria-label="Supprimer le fichier">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search"></i> Analyser
-                            </button>
-                        </div>
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-search"></i>
+                            <span>Analyser</span>
+                            <div class="loading-spinner"></div>
+                        </button>
                     </form>
-                </section>
+                </div>
 
-                <section class="paste-section">
-                    <i class="fas fa-paste section-icon"></i>
-                    <h2><i class="fas fa-align-left"></i> Coller votre contenu log</h2>
-                    <form action="/analyze-text" method="post">
-                        <div class="form-group">
-                            <textarea id="logtext" name="logtext" rows="10" placeholder="Collez vos logs ici..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search"></i> Analyser
+                <div class="divider">
+                    <span>OU</span>
+                </div>
+
+                <div class="upload-card">
+                    <div class="upload-icon pulse">
+                        <i class="fas fa-paste"></i>
+                    </div>
+                    <h2>Coller votre contenu log</h2>
+                    <form action="/analyze-text" method="post" class="paste-form">
+                        <div class="textarea-container">
+                            <textarea 
+                                id="logtext" 
+                                name="logtext" 
+                                rows="8" 
+                                placeholder="Collez vos logs ici..."
+                                class="log-textarea"
+                            ></textarea>
+                            <button type="button" class="clear-textarea" title="Effacer le contenu">
+                                <i class="fas fa-eraser"></i>
                             </button>
                         </div>
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-search"></i>
+                            <span>Analyser</span>
+                            <div class="loading-spinner"></div>
+                        </button>
                     </form>
-                </section>
+                </div>
             </div>
-        </main>
-
-        <footer>
-            <p>&copy; 2025 Analyseur de Logs de Sécurité - Projet PFA</p>
-        </footer>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>
+    <div class="notification" id="notification">
+        <i class="fas fa-info-circle"></i>
+        <span class="notification-message"></span>
+        <button class="notification-close">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
     <script>
-        // Initialize parallax effect
         document.addEventListener('DOMContentLoaded', function() {
-            const scene = document.querySelector('.parallax-bg');
-            const parallaxInstance = new Parallax(scene, {
-                relativeInput: true,
-                hoverOnly: true,
-                calibrateX: true,
-                calibrateY: true
+            // Theme toggling
+            const themeToggle = document.getElementById('theme-toggle');
+            const html = document.documentElement;
+            
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            html.setAttribute('data-theme', savedTheme);
+            themeToggle.checked = savedTheme === 'dark';
+
+            themeToggle.addEventListener('change', function() {
+                const theme = this.checked ? 'dark' : 'light';
+                html.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            });
+
+            const fileInput = document.getElementById('logfile');
+            const dropZone = document.getElementById('dropZone');
+            const fileLabel = document.querySelector('.file-label');
+            const selectedFileInfo = document.querySelector('.selected-file-info');
+            const fileName = document.querySelector('.file-name');
+            const removeFileBtn = document.querySelector('.remove-file');
+            const textarea = document.getElementById('logtext');
+            const clearTextareaBtn = document.querySelector('.clear-textarea');
+            const forms = document.querySelectorAll('form');
+            const notification = document.getElementById('notification');
+
+            function showNotification(message, type = 'info') {
+                notification.className = `notification ${type}`;
+                notification.querySelector('.notification-message').textContent = message;
+                notification.classList.add('show');
+                setTimeout(() => notification.classList.remove('show'), 3000);
+            }
+
+            // File upload handling
+            function handleFileSelect(file) {
+                if (file) {
+                    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                        showNotification('Le fichier est trop volumineux. Limite: 10MB', 'error');
+                        fileInput.value = '';
+                        return;
+                    }
+                    fileName.textContent = file.name;
+                    selectedFileInfo.classList.remove('hidden');
+                    fileLabel.classList.add('has-file');
+                    showNotification('Fichier sélectionné avec succès', 'success');
+                }
+            }
+
+            fileInput.addEventListener('change', function(e) {
+                handleFileSelect(this.files[0]);
+            });
+
+            removeFileBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                selectedFileInfo.classList.add('hidden');
+                fileLabel.classList.remove('has-file');
+                showNotification('Fichier supprimé');
+            });
+
+            // Drag and drop handling with improved visual feedback
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight(e) {
+                dropZone.classList.add('drag-active');
+            }
+
+            function unhighlight(e) {
+                dropZone.classList.remove('drag-active');
+            }
+
+            dropZone.addEventListener('drop', function(e) {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                fileInput.files = dt.files;
+                handleFileSelect(file);
+            });
+
+            // Textarea handling with character count
+            clearTextareaBtn.addEventListener('click', function() {
+                textarea.value = '';
+                textarea.focus();
+                showNotification('Contenu effacé');
+            });
+
+            // Form submission handling with improved feedback
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const button = this.querySelector('button[type="submit"]');
+                    button.classList.add('loading');
+                    showNotification('Analyse en cours...', 'info');
+                });
+            });
+
+            // Close notification button
+            document.querySelector('.notification-close').addEventListener('click', function() {
+                notification.classList.remove('show');
             });
         });
     </script>

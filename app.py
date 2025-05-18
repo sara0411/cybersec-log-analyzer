@@ -199,10 +199,45 @@ def analyze_csv_logs(processed_df):
     return threats
 
 def calculate_csv_stats(processed_df, threats):
+    if len(processed_df) == 0:
+        return {
+            'critical': 0,
+            'critical_change': 0,
+            'warnings': 0,
+            'warnings_change': 0,
+            'events': 0,
+            'events_change': 0,
+            'security_score': 0,
+            'total_entries': 0,
+            'total_threats': 0,
+            'risk_class': "low"
+        }
+
+    # Count threats by severity
+    high_threats = sum(1 for t in threats if t.get('severity') == 'high')
+    medium_threats = sum(1 for t in threats if t.get('severity') == 'medium')
+    low_threats = sum(1 for t in threats if t.get('severity') == 'low')
+
+    # Calculate security score based on threat ratio
+    total_entries = len(processed_df)
+    security_score = min(100, (high_threats * 5 + medium_threats * 3 + low_threats) / total_entries * 100)
+
+    # Calculate changes (placeholder - you might want to compare with historical data)
+    critical_change = 10 if high_threats > 0 else 0
+    warnings_change = 5 if medium_threats > 0 else -5
+    events_change = 0  # Neutral change for events
+
     stats = {
-        'total_entries': len(processed_df),
-        'total_anomalies': len(threats),
-        'anomaly_rate': f"{(len(threats) / len(processed_df) * 100):.2f}%" if len(processed_df) > 0 else "0.00%"
+        'critical': high_threats,
+        'critical_change': critical_change,
+        'warnings': medium_threats,
+        'warnings_change': warnings_change,
+        'events': low_threats,
+        'events_change': events_change,
+        'security_score': security_score,
+        'total_entries': total_entries,
+        'total_threats': len(threats),
+        'risk_class': calculate_risk_class(len(threats), total_entries)
     }
     return stats
 
@@ -288,12 +323,43 @@ def analyze_text_logs(processed_df):
 
 def calculate_text_stats(processed_df, threats):
     if len(processed_df) == 0:
-        return {'total_entries': 0, 'total_threats': 0, 'risk_score': "0%", 'risk_class': "low"}
+        return {
+            'critical': 0,
+            'critical_change': 0,
+            'warnings': 0,
+            'warnings_change': 0,
+            'events': 0,
+            'events_change': 0,
+            'security_score': 0,
+            'total_entries': 0,
+            'total_threats': 0,
+            'risk_class': "low"
+        }
+
+    # Count threats by severity
+    high_threats = sum(1 for t in threats if t.get('severity') == 'high')
+    medium_threats = sum(1 for t in threats if t.get('severity') == 'medium')
+    low_threats = sum(1 for t in threats if t.get('severity') == 'low')
+
+    # Calculate security score
+    security_score = calculate_risk_score(threats, len(processed_df))
+    security_score = float(security_score.strip('%'))  # Convert "XX.X%" to float
+
+    # Calculate changes (placeholder - you might want to compare with historical data)
+    critical_change = 10 if high_threats > 0 else 0
+    warnings_change = 5 if medium_threats > 0 else -5
+    events_change = 0  # Neutral change for events
 
     stats = {
+        'critical': high_threats,
+        'critical_change': critical_change,
+        'warnings': medium_threats,
+        'warnings_change': warnings_change,
+        'events': low_threats,
+        'events_change': events_change,
+        'security_score': security_score,
         'total_entries': len(processed_df),
         'total_threats': len(threats),
-        'risk_score': calculate_risk_score(threats, len(processed_df)),
         'risk_class': calculate_risk_class(len(threats), len(processed_df))
     }
     return stats
@@ -315,9 +381,9 @@ def calculate_text_log_types(processed_df):
 def generate_text_actions(threats, stats):
     actions = []
     threat_types = set(t['type'].lower() for t in threats)
-    risk_score = float(stats['risk_score'].replace('%', ''))
+    security_score = stats.get('security_score', 0)
 
-    if risk_score > 50:
+    if security_score > 50:
         actions.append({
             'description': "Perform a full security audit of the system immediately.",
             'priority': 'high'
@@ -348,7 +414,7 @@ def generate_text_actions(threats, stats):
         })
         actions.append({
             'description': "Configure a real-time monitoring and alerting system.",
-            'priority': 'medium' if risk_score > 30 else 'low'
+            'priority': 'medium' if security_score > 30 else 'low'
         })
 
     if len(threats) == 0:
@@ -361,6 +427,7 @@ def generate_text_actions(threats, stats):
 def process_logs(file_path):
     analysis_id = str(uuid.uuid4())
     log_format = detect_log_format(file_path)
+    start_time = datetime.now()
 
     try:
         if log_format == 'csv':
@@ -370,7 +437,6 @@ def process_logs(file_path):
             log_types = calculate_csv_log_types(processed_df)
             actions = generate_csv_actions(threats, stats)
         else:
-            processed_df = preprocessor.process_log_file
             processed_df = preprocessor.process_log_file(file_path)
             processed_df = feature_extractor.preprocess_logs_for_nlp(processed_df)
             processed_df = feature_extractor.extract_security_features(processed_df)
@@ -379,6 +445,15 @@ def process_logs(file_path):
             log_types = calculate_text_log_types(processed_df)
             actions = generate_text_actions(threats, stats)
 
+        # Generate timeline data
+        if 'timestamp' in processed_df.columns:
+            timeline_data = processed_df.groupby('timestamp').size().to_dict()
+            timeline_labels = list(timeline_data.keys())
+            timeline_values = list(timeline_data.values())
+        else:
+            timeline_labels = []
+            timeline_values = []
+
         analysis_results[analysis_id] = {
             'threats': threats,
             'processed_df': processed_df,
@@ -386,12 +461,18 @@ def process_logs(file_path):
             'log_format': log_format,
         }
 
+        analysis_duration = (datetime.now() - start_time).total_seconds()
+
         return render_template('results.html',
-                               stats=stats,
-                               threats=threats,
-                               log_types=log_types,
-                               actions=actions,
-                               analysis_id=analysis_id)
+                            stats=stats,
+                            threats=threats,
+                            log_types=log_types,
+                            actions=actions,
+                            analysis_id=analysis_id,
+                            timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            analysis_duration=f"{analysis_duration:.1f}",
+                            timeline_labels=timeline_labels,
+                            timeline_values=timeline_values)
 
     except Exception as e:
         error_message = f"Error processing logs: {e}"

@@ -1,179 +1,434 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Résultats d'Analyse - Analyseur de Logs de Sécurité</title>
+    <title>Résultats - Analyseur de Logs de Sécurité</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='analysis.css') }}">
 </head>
 <body>
-    <!-- Parallax Background Elements -->
-    <div class="parallax-bg">
-        <div class="parallax-layer layer-1" data-depth="0.1"></div>
-        <div class="parallax-layer layer-2" data-depth="0.3"></div>
-        <div class="parallax-layer layer-3" data-depth="0.6"></div>
+    <div class="theme-switch">
+        <label class="switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider round"></span>
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-sun"></i>
+        </label>
     </div>
 
-    <div class="container">
-        <header>
-            <div class="header-content">
-                <h1><i class="fas fa-chart-bar"></i> Résultats d'Analyse</h1>
-                <p>Analyse complète de vos fichiers logs</p>
-            </div>
-        </header>
+    <div class="app-container">
+        <div class="analysis-container">
+            <!-- Header Section -->
+            <header class="app-header">
+                <div class="logo-container">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>Résultats d'Analyse</h1>
+                </div>
+                <p class="app-description">
+                    Analyse effectuée le {{ timestamp }} ({{ analysis_duration }} secondes)
+                </p>
+                <div class="header-actions">
+                    <button class="action-btn" onclick="window.print()">
+                        <i class="fas fa-file-pdf"></i>
+                        Exporter PDF
+                    </button>
+                    <a href="/" class="action-btn">
+                        <i class="fas fa-plus"></i>
+                        Nouvelle Analyse
+                    </a>
+                </div>
+            </header>
 
-        <main>
-            <section class="summary-section">
-                <h2><i class="fas fa-chart-pie"></i> Résumé</h2>
-                <div class="summary-stats">
-                    <div class="stat-card">
-                        <h3>Total des entrées</h3>
-                        <p class="stat-value">{{ stats.total_entries }}</p>
+            <!-- Stats Section -->
+            <div class="stats-display">
+                <div class="stat-card">
+                    <div class="stat-icon critical">
+                        <i class="fas fa-skull"></i>
                     </div>
-                    <div class="stat-card">
-                        <h3>Menaces détectées</h3>
-                        <p class="stat-value threat">{{ stats.total_threats }}</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Score de risque</h3>
-                        <p class="stat-value {{ stats.risk_class }}">{{ stats.risk_score }}</p>
+                    <div class="stat-content">
+                        <div class="stat-label">Menaces Critiques</div>
+                        <div class="stat-value">{{ stats.get('critical', 0) }}</div>
+                        <div class="stat-change increase">
+                            <i class="fas fa-arrow-up"></i>
+                            {{ stats.get('critical_change', 0) }}%
+                        </div>
                     </div>
                 </div>
-            </section>
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Alertes</div>
+                        <div class="stat-value">{{ stats.get('warnings', 0) }}</div>
+                        <div class="stat-change decrease">
+                            <i class="fas fa-arrow-down"></i>
+                            {{ stats.get('warnings_change', 0) }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon info">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Événements</div>
+                        <div class="stat-value">{{ stats.get('events', 0) }}</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-minus"></i>
+                            {{ stats.get('events_change', 0) }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Score Sécurité</div>
+                        <div class="stat-value">{{ stats.get('security_score', 0) }}/100</div>
+                        <div class="security-progress">
+                            <div class="security-bar" style="width: {{ stats.get('security_score', 0) }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            <section class="threats-section">
-                <h2><i class="fas fa-exclamation-triangle"></i> Menaces détectées</h2>
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Distribution des Menaces</h3>
+                    </div>
+                    <canvas id="threatsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Activité Temporelle</h3>
+                    </div>
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Threats Table -->
+            <div class="threats-table-container">
+                <div class="threats-header">
+                    <h2>Menaces Détectées</h2>
+                    <div class="threats-filters">
+                        <select class="filter-select" id="severityFilter">
+                            <option value="all">Toutes les sévérités</option>
+                            <option value="high">Critique</option>
+                            <option value="medium">Avertissement</option>
+                            <option value="low">Information</option>
+                        </select>
+                        <select class="filter-select" id="typeFilter">
+                            <option value="all">Tous les types</option>
+                            {% for type in threat_types %}
+                            <option value="{{ type }}">{{ type }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" class="search-input" id="searchThreats" placeholder="Rechercher...">
+                    </div>
+                </div>
+
                 <table class="threats-table">
                     <thead>
                         <tr>
+                            <th>Timestamp</th>
                             <th>Type</th>
-                            <th>Probabilité</th>
-                            <th>Entrée log</th>
-                            <th>Détails</th>
+                            <th>Sévérité</th>
+                            <th>Source</th>
+                            <th>Description</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for threat in threats %}
-                        <tr class="threat-row {{ threat.severity }}">
+                        <tr data-type="{{ threat.type }}" data-severity="{{ threat.severity }}">
+                            <td>{{ threat.timestamp if threat.timestamp else '' }}</td>
                             <td>{{ threat.type }}</td>
-                            <td>{{ threat.probability }}%</td>
-                            <td class="log-entry">{{ threat.log_entry }}</td>
-                            <td><button class="btn-details" onclick="showDetails('{{ threat.id }}')"><i class="fas fa-eye"></i> Détails</button></td>
+                            <td>
+                                <span class="severity-badge {{ threat.severity }}">
+                                    <i class="fas fa-circle"></i>
+                                    {{ threat.severity }}
+                                </span>
+                            </td>
+                            <td>{{ threat.source if threat.source else '' }}</td>
+                            <td>{{ threat.log_entry }}</td>
+                            <td>
+                                <button class="action-btn" data-threat-id="{{ threat.id }}">
+                                    <i class="fas fa-eye"></i>
+                                    Détails
+                                </button>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-
-                {% if not threats %}
-                <p class="no-threats">Aucune menace détectée.</p>
-                {% endif %}
-            </section>
-
-            <section class="distribution-section">
-                <h2><i class="fas fa-chart-bar"></i> Distribution des types de logs</h2>
-                <div class="chart-container">
-                    <canvas id="logsDistributionChart"></canvas>
-                </div>
-            </section>
-
-            <section class="actions-section">
-                <h2><i class="fas fa-tasks"></i> Actions recommandées</h2>
-                <ul class="actions-list">
-                    {% for action in actions %}
-                    <li class="{{ action.priority }}">{{ action.description }}</li>
-                    {% endfor %}
-                </ul>
-
-                {% if not actions %}
-                <p>Aucune action nécessaire.</p>
-                {% endif %}
-            </section>
-
-            <div class="btn-container">
-                <a href="/" class="btn btn-secondary"><i class="fas fa-undo"></i> Analyser un autre fichier</a>
-                <a href="/download-report" class="btn btn-primary"><i class="fas fa-download"></i> Télécharger le rapport</a>
             </div>
-        </main>
 
-        <!-- Modal pour les détails -->
-        <div id="detailsModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2><i class="fas fa-search-plus"></i> Détails de la menace</h2>
-                <div id="threatDetails"></div>
+            <!-- Timeline Section -->
+            <div class="timeline-section">
+                <h2>Chronologie des Événements</h2>
+                <div class="timeline">
+                    {% for threat in threats %}
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <div class="timeline-time">{{ threat.timestamp if threat.timestamp else '' }}</div>
+                            <h4>{{ threat.type }}</h4>
+                            <p>{{ threat.log_entry }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-
-        <footer>
-            <p>&copy; 2025 Analyseur de Logs de Sécurité - Projet PFA</p>
-        </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>
-    <script>
-        // Initialize parallax effect
-        document.addEventListener('DOMContentLoaded', function() {
-            const scene = document.querySelector('.parallax-bg');
-            const parallaxInstance = new Parallax(scene, {
-                relativeInput: true,
-                hoverOnly: true,
-                calibrateX: true,
-                calibrateY: true
-            });
+    <!-- Modal for threat details -->
+    <div id="threatModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Détails de la Menace</h3>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
 
-            // Chart initialization
-            const logTypes = JSON.parse('{{ log_types|tojson|safe }}');
-            const ctx = document.getElementById('logsDistributionChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: logTypes.labels,
-                    datasets: [{
-                        data: logTypes.values,
-                        backgroundColor: [
-                            '#4361ee',
-                            '#4cc9f0',
-                            '#3f37c9',
-                            '#7209b7',
-                            '#f72585',
-                            '#8d99ae'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                        }
-                    },
-                    cutout: '65%'
-                }
-            });
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script>
+        // Initialize timeline data
+        const timelineLabels = {{ timeline_labels | tojson | safe if timeline_labels else '[]' }};
+        const timelineValues = {{ timeline_values | tojson | safe if timeline_values else '[]' }};
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+        themeToggle.checked = savedTheme === 'dark';
+
+        themeToggle.addEventListener('change', function() {
+            const theme = this.checked ? 'dark' : 'light';
+            html.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            updateCharts();
         });
 
-        function showDetails(threatId) {
-            fetch(`/threat-details/${threatId}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('threatDetails').innerHTML = data.details;
-                    document.getElementById('detailsModal').style.display = 'block';
-                });
+        // Charts
+        function getThemeColors() {
+            const style = getComputedStyle(document.documentElement);
+            return {
+                text: style.getPropertyValue('--text-primary'),
+                background: style.getPropertyValue('--bg-primary'),
+                border: style.getPropertyValue('--border-color'),
+            };
         }
 
-        document.querySelector('.close').addEventListener('click', function() {
-            document.getElementById('detailsModal').style.display = 'none';
+        function createThreatsChart() {
+            const colors = getThemeColors();
+            const ctx = document.getElementById('threatsChart').getContext('2d');
+            
+            const data = {
+                labels: ['Critique', 'Avertissement', 'Information'],
+                datasets: [{
+                    data: [
+                        parseInt('{{ stats.get("critical", 0) }}'),
+                        parseInt('{{ stats.get("warnings", 0) }}'),
+                        parseInt('{{ stats.get("events", 0) }}')
+                    ],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'],
+                    borderColor: colors.background,
+                    borderWidth: 2
+                }]
+            };
+            
+            return new Chart(ctx, {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: colors.text,
+                                font: { family: 'Inter' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTimelineChart() {
+            const colors = getThemeColors();
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            
+            // Default empty data if timeline data is not provided
+            const timelineData = {
+                labels: [],
+                datasets: [{
+                    label: 'Événements',
+                    data: [],
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            };
+
+            // Try to parse timeline data if available
+            try {
+                if (typeof timelineLabels !== 'undefined' && typeof timelineValues !== 'undefined') {
+                    timelineData.labels = timelineLabels;
+                    timelineData.datasets[0].data = timelineValues;
+                }
+            } catch (error) {
+                console.error('Error parsing timeline data:', error);
+            }
+            
+            return new Chart(ctx, {
+                type: 'line',
+                data: timelineData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: colors.border
+                            },
+                            ticks: {
+                                color: colors.text
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: colors.border
+                            },
+                            ticks: {
+                                color: colors.text
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Filtering functionality
+        const searchInput = document.getElementById('searchThreats');
+        const severityFilter = document.getElementById('severityFilter');
+        const typeFilter = document.getElementById('typeFilter');
+        const tableBody = document.querySelector('.threats-table tbody');
+        const rows = tableBody.querySelectorAll('tr');
+
+        function filterThreats() {
+            const searchQuery = searchInput.value.toLowerCase();
+            const selectedSeverity = severityFilter.value;
+            const selectedType = typeFilter.value;
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const rowSeverity = row.querySelector('.severity-badge').textContent.trim().toLowerCase();
+                const rowType = row.querySelector('td:nth-child(2)').textContent.trim();
+
+                const matchesSearch = text.includes(searchQuery);
+                const matchesSeverity = selectedSeverity === 'all' || rowSeverity === selectedSeverity;
+                const matchesType = selectedType === 'all' || rowType === selectedType;
+
+                row.style.display = matchesSearch && matchesSeverity && matchesType ? '' : 'none';
+            });
+        }
+
+        // Add event listeners for filtering
+        searchInput.addEventListener('input', filterThreats);
+        severityFilter.addEventListener('change', filterThreats);
+        typeFilter.addEventListener('change', filterThreats);
+
+        // Modal functionality
+        const modal = document.getElementById('threatModal');
+        const closeModalBtn = document.querySelector('.close-modal');
+
+        async function showThreatDetails(threatId) {
+            try {
+                const response = await fetch(`/threat-details/${threatId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch threat details');
+                }
+                const data = await response.json();
+                
+                const modalBody = modal.querySelector('.modal-body');
+                modalBody.innerHTML = data.details;
+                modal.classList.add('show');
+            } catch (error) {
+                console.error('Error fetching threat details:', error);
+                showNotification('Failed to load threat details', 'error');
+            }
+        }
+
+        // Close modal when clicking the close button
+        closeModalBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
         });
 
-        window.addEventListener('click', function(event) {
-            if (event.target == document.getElementById('detailsModal')) {
-                document.getElementById('detailsModal').style.display = 'none';
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('show');
             }
+        });
+
+        // Add click handlers to all detail buttons
+        document.querySelectorAll('.action-btn[data-threat-id]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const threatId = btn.getAttribute('data-threat-id');
+                showThreatDetails(threatId);
+            });
+        });
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.className = `notification ${type}`;
+            notification.querySelector('.notification-message').textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize charts
+        let threatsChart = createThreatsChart();
+        let timelineChart = createTimelineChart();
+
+        function updateCharts() {
+            threatsChart.destroy();
+            timelineChart.destroy();
+            threatsChart = createThreatsChart();
+            timelineChart = createTimelineChart();
+        }
+
+        // Initialize charts when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            createThreatsChart();
+            // ... rest of your existing code ...
         });
     </script>
 </body>
